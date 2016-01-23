@@ -45,6 +45,7 @@ func (s *Suite) TestMoreSubs(ch *check.C) {
 
 	ch.Check(<-sub1, check.Equals, "globe")
 	ch.Check(<-sub2, check.Equals, "globe")
+
 	ch.Check(<-sub3, check.Equals, "world")
 	ch.Check(<-sub3, check.Equals, "globe")
 }
@@ -59,9 +60,10 @@ func (s *Suite) TestChaining(ch *check.C) {
 
 	ch.Check(<-sub1, check.Equals, "world-chaining")
 	ch.Check(<-sub2, check.Equals, "world-chaining")
-	ch.Check(<-sub3, check.Equals, "world-chaining")
 
 	ch.Check(<-sub1, check.Equals, "globe")
 	ch.Check(<-sub2, check.Equals, "globe")
+	
+	ch.Check(<-sub3, check.Equals, "world-chaining")
 	ch.Check(<-sub3, check.Equals, "globe")
 }
