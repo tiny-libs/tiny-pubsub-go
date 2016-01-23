@@ -1,13 +1,11 @@
 package pubsub
 
 import (
-	// "log"
-	"runtime"
 )
 
 type channel struct {
 	namespace string
-	subscriptions []chan interface{}
+	callbacks []func(data interface{})
 	channels map[string]*channel
 }
 
@@ -22,27 +20,22 @@ func newPubsub() *pubsub {
 	return ps
 }
 
-func (ps *pubsub) on(namespace string) chan interface{} {
+func (ps *pubsub) on(namespace string, callback func(data interface{})) *pubsub {
 	chann, ok := ps.channels[namespace]
 	if(!ok) {
 		chann = &channel{ namespace : namespace}
 		ps.channels[namespace] = chann
 	}
-	currSub := make(chan interface{})
-	chann.subscriptions = append(chann.subscriptions, currSub)
 
-	return currSub
+	chann.callbacks = append(chann.callbacks, callback)
+	return ps
 }
 
-func (ps *pubsub) publish(namespace string, args string) *pubsub {
+func (ps *pubsub) publish(namespace string, args interface{}) *pubsub {
 	chann := ps.channels[namespace]
 
-	for _, sub := range chann.subscriptions {
-		go func(sub chan interface{}) {
-			// log.Println("sub", sub);
-			sub <- args
-			runtime.Gosched()
-		}(sub)
+	for _, callback := range chann.callbacks {
+		callback(args)
 	}
 	return ps
 }
