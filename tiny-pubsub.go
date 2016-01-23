@@ -1,5 +1,9 @@
 package pubsub
 
+// import (
+// 	"log"
+// )
+
 type channel struct {
 	namespace string
 	subscriptions []chan interface{}
@@ -18,11 +22,13 @@ func newPubsub() *pubsub {
 }
 
 func (ps *pubsub) on(namespace string) chan interface{} {
+	chann, ok := ps.channels[namespace]
+	if(!ok) {
+		chann = &channel{ namespace : namespace}
+		ps.channels[namespace] = chann
+	}
 	currSub := make(chan interface{})
-	chann := &channel{ namespace : namespace}
-
 	chann.subscriptions = append(chann.subscriptions, currSub)
-	ps.channels[namespace] = chann
 
 	return currSub
 }
@@ -30,10 +36,11 @@ func (ps *pubsub) on(namespace string) chan interface{} {
 func (ps *pubsub) publish(namespace string, args string) *pubsub {
 	chann := ps.channels[namespace]
 
-	for _, sub := range chann.subscriptions {
-		go func(args string) {
+	go func(args string) {
+		for _, sub := range chann.subscriptions {
+			// log.Println("sub", sub);
 			sub <- args
-		}(args)
-	}
+		}
+	}(args)
 	return ps
 }
