@@ -83,7 +83,9 @@ func (s *Suite) TestChaining(ch *check.C) {
 		if(ok) {
 			val1 = val
 		}
-	}).publish("hello", "world").publish("hello", "globe")
+	})
+
+	pubsub.publish("hello", "world").publish("hello", "globe")
 
 	ch.Check(val1, check.Equals, "globe")
 }
@@ -108,4 +110,26 @@ func (s *Suite) TestConcurrentCallback(ch *check.C) {
 	pubsub.publish("hello", 2)
 	ch.Check(<-ch1, check.Equals, 3)
 	ch.Check(counter, check.Equals, 3)
+}
+
+func (s *Suite) TestUnsubscribe(ch *check.C) {
+	pubsub := newPubsub()
+	var counter int
+
+	sub := pubsub.on("hello", func(data interface{}) {
+		counter += data.(int)
+	})
+
+	pubsub.publish("hello", 3)
+
+	ch.Check(counter, check.Equals, 3)
+
+	pubsub.publish("hello", 5)
+	ch.Check(counter, check.Equals, 8)
+
+	sub.off()
+	pubsub.publish("hello", 5)
+	ch.Check(counter, check.Equals, 8)
+	pubsub.publish("hello", 5)
+	ch.Check(counter, check.Equals, 8)
 }

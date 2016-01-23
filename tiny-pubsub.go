@@ -5,8 +5,17 @@ import (
 
 type channel struct {
 	namespace string
-	callbacks []func(data interface{})
+	callbacks map[int]func(data interface{})
+	lastIndex int
 	channels map[string]*channel
+}
+
+type subscription struct {
+	namespace string
+	callback func(data interface{})
+	chn *channel
+	index int
+	ps *pubsub
 }
 
 type pubsub struct {
@@ -20,15 +29,34 @@ func newPubsub() *pubsub {
 	return ps
 }
 
-func (ps *pubsub) on(namespace string, callback func(data interface{})) *pubsub {
+func (sub *subscription) off() *pubsub {
+	callbacks := sub.chn.callbacks
+
+	delete(callbacks, sub.index)
+
+	return sub.ps
+}
+
+func (ps *pubsub) on(namespace string, callback func(data interface{})) *subscription {
 	chann, ok := ps.channels[namespace]
 	if(!ok) {
-		chann = &channel{ namespace : namespace}
+		chann = &channel{
+			namespace : namespace,
+			callbacks : make(map[int]func(data interface{})),
+		}
 		ps.channels[namespace] = chann
 	}
 
-	chann.callbacks = append(chann.callbacks, callback)
-	return ps
+	chann.lastIndex++
+	chann.callbacks[chann.lastIndex] = callback
+
+	return &subscription{
+		namespace,
+		callback,
+		chann,
+		chann.lastIndex,
+		ps,
+	}
 }
 
 func (ps *pubsub) publish(namespace string, args interface{}) *pubsub {
