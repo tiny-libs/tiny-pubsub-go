@@ -17,18 +17,18 @@ func (s *Suite) TestSub(ch *check.C) {
 	pubsub := NewPubsub()
 	var val string
 
-	pubsub.on("hello", func(data interface{}) {
+	pubsub.On("hello", func(data interface{}) {
 		val = data.(string)
 	})
-	pubsub.publish("hello", "world")
+	pubsub.Publish("hello", "world")
 
 	ch.Check(val, check.Equals, "world")
-	pubsub.publish("hello", "globe")
+	pubsub.Publish("hello", "globe")
 
 	ch.Check(val, check.Equals, "globe")
 
-	pubsub.publish("hello", "one")
-	pubsub.publish("hello", "two")
+	pubsub.Publish("hello", "one")
+	pubsub.Publish("hello", "two")
 
 	ch.Check(val, check.Equals, "two")
 }
@@ -39,19 +39,19 @@ func (s *Suite) TestMoreSubs(ch *check.C) {
 	val2 := "test"
 	val3 := []int{}
 
-	pubsub.on("hello", func(data interface{}) {
+	pubsub.On("hello", func(data interface{}) {
 		val, ok := data.(int)
 		if(ok) {
 			val1 = val
 		}
 	})
-	pubsub.on("hello", func(data interface{}) {
+	pubsub.On("hello", func(data interface{}) {
 		val, ok := data.(string)
 		if(ok) {
 			val2 = val
 		}
 	})
-	pubsub.on("hello", func(data interface{}) {
+	pubsub.On("hello", func(data interface{}) {
 		val, ok := data.(int)
 		if(ok) {
 			val3 = append(val3, val)
@@ -61,13 +61,13 @@ func (s *Suite) TestMoreSubs(ch *check.C) {
 	ch.Check(val2, check.Equals, "test")
 	ch.Check(len(val3), check.Equals, 0)
 
-	pubsub.publish("hello", "world")
+	pubsub.Publish("hello", "world")
 
 	ch.Check(val1, check.Equals, 0)
 	ch.Check(val2, check.Equals, "world")
 	ch.Check(len(val3), check.Equals, 0)
 
-	pubsub.publish("hello", 5)
+	pubsub.Publish("hello", 5)
 	ch.Check(val1, check.Equals, 5)
 	ch.Check(val2, check.Equals, "world")
 	ch.Check(len(val3), check.Equals, 1)
@@ -78,14 +78,14 @@ func (s *Suite) TestChaining(ch *check.C) {
 	pubsub := NewPubsub()
 	val1 := "test"
 
-	pubsub.on("hello", func(data interface{}) {
+	pubsub.On("hello", func(data interface{}) {
 		val, ok := data.(string)
 		if(ok) {
 			val1 = val
 		}
 	})
 
-	pubsub.publish("hello", "world").publish("hello", "globe")
+	pubsub.Publish("hello", "world").Publish("hello", "globe")
 
 	ch.Check(val1, check.Equals, "globe")
 }
@@ -95,19 +95,19 @@ func (s *Suite) TestConcurrentCallback(ch *check.C) {
 	var counter int
 	ch1 := make(chan int)
 
-	pubsub.on("hello", func(data interface{}) {
+	pubsub.On("hello", func(data interface{}) {
 		go func() {
 			counter += data.(int)
 			ch1 <- counter
 		}()
 	})
 
-	pubsub.publish("hello", 1)
+	pubsub.Publish("hello", 1)
 
 	ch.Check(<-ch1, check.Equals, 1)
 	ch.Check(counter, check.Equals, 1)
 
-	pubsub.publish("hello", 2)
+	pubsub.Publish("hello", 2)
 	ch.Check(<-ch1, check.Equals, 3)
 	ch.Check(counter, check.Equals, 3)
 }
@@ -116,20 +116,20 @@ func (s *Suite) TestUnsubscribe(ch *check.C) {
 	pubsub := NewPubsub()
 	var counter int
 
-	sub := pubsub.on("hello", func(data interface{}) {
+	sub := pubsub.On("hello", func(data interface{}) {
 		counter += data.(int)
 	})
 
-	pubsub.publish("hello", 3)
+	pubsub.Publish("hello", 3)
 
 	ch.Check(counter, check.Equals, 3)
 
-	pubsub.publish("hello", 5)
+	pubsub.Publish("hello", 5)
 	ch.Check(counter, check.Equals, 8)
 
-	sub.off()
-	pubsub.publish("hello", 5)
+	sub.Off()
+	pubsub.Publish("hello", 5)
 	ch.Check(counter, check.Equals, 8)
-	pubsub.publish("hello", 5)
+	pubsub.Publish("hello", 5)
 	ch.Check(counter, check.Equals, 8)
 }

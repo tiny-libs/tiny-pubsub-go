@@ -29,7 +29,7 @@ func NewPubsub() *Pubsub {
 	return ps
 }
 
-func (sub *Subscription) off() *Pubsub {
+func (sub *Subscription) Off() *Pubsub {
 	callbacks := sub.chn.callbacks
 
 	delete(callbacks, sub.index)
@@ -37,7 +37,7 @@ func (sub *Subscription) off() *Pubsub {
 	return sub.ps
 }
 
-func (ps *Pubsub) on(namespace string, callback func(data interface{})) *Subscription {
+func (ps *Pubsub) On(namespace string, callback func(data interface{})) *Subscription {
 	chann, ok := ps.channels[namespace]
 	if(!ok) {
 		chann = &channel{
@@ -59,7 +59,7 @@ func (ps *Pubsub) on(namespace string, callback func(data interface{})) *Subscri
 	}
 }
 
-func (ps *Pubsub) publish(namespace string, args interface{}) *Pubsub {
+func (ps *Pubsub) Publish(namespace string, args interface{}) *Pubsub {
 	chann := ps.channels[namespace]
 
 	for _, callback := range chann.callbacks {
