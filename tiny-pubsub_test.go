@@ -14,7 +14,7 @@ func Test(t *testing.T) {
 type Suite struct{}
 
 func (s *Suite) TestSub(ch *check.C) {
-	pubsub := newPubsub()
+	pubsub := NewPubsub()
 	var val string
 
 	pubsub.on("hello", func(data interface{}) {
@@ -34,7 +34,7 @@ func (s *Suite) TestSub(ch *check.C) {
 }
 
 func (s *Suite) TestMoreSubs(ch *check.C) {
-	pubsub := newPubsub()
+	pubsub := NewPubsub()
 	val1 := 0
 	val2 := "test"
 	val3 := []int{}
@@ -75,7 +75,7 @@ func (s *Suite) TestMoreSubs(ch *check.C) {
 }
 
 func (s *Suite) TestChaining(ch *check.C) {
-	pubsub := newPubsub()
+	pubsub := NewPubsub()
 	val1 := "test"
 
 	pubsub.on("hello", func(data interface{}) {
@@ -91,7 +91,7 @@ func (s *Suite) TestChaining(ch *check.C) {
 }
 
 func (s *Suite) TestConcurrentCallback(ch *check.C) {
-	pubsub := newPubsub()
+	pubsub := NewPubsub()
 	var counter int
 	ch1 := make(chan int)
 
@@ -113,7 +113,7 @@ func (s *Suite) TestConcurrentCallback(ch *check.C) {
 }
 
 func (s *Suite) TestUnsubscribe(ch *check.C) {
-	pubsub := newPubsub()
+	pubsub := NewPubsub()
 	var counter int
 
 	sub := pubsub.on("hello", func(data interface{}) {
