@@ -10,7 +10,7 @@ type channel struct {
 	channels map[string]*channel
 }
 
-type subscription struct {
+type Subscription struct {
 	namespace string
 	callback func(data interface{})
 	chn *channel
@@ -29,7 +29,7 @@ func NewPubsub() *Pubsub {
 	return ps
 }
 
-func (sub *subscription) off() *Pubsub {
+func (sub *Subscription) off() *Pubsub {
 	callbacks := sub.chn.callbacks
 
 	delete(callbacks, sub.index)
@@ -37,7 +37,7 @@ func (sub *subscription) off() *Pubsub {
 	return sub.ps
 }
 
-func (ps *Pubsub) on(namespace string, callback func(data interface{})) *subscription {
+func (ps *Pubsub) on(namespace string, callback func(data interface{})) *Subscription {
 	chann, ok := ps.channels[namespace]
 	if(!ok) {
 		chann = &channel{
@@ -50,7 +50,7 @@ func (ps *Pubsub) on(namespace string, callback func(data interface{})) *subscri
 	chann.lastIndex++
 	chann.callbacks[chann.lastIndex] = callback
 
-	return &subscription{
+	return &Subscription{
 		namespace,
 		callback,
 		chann,
