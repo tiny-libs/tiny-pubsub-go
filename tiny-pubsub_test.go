@@ -133,3 +133,31 @@ func (s *Suite) TestUnsubscribe(ch *check.C) {
 	pubsub.Publish("hello", 5)
 	ch.Check(counter, check.Equals, 8)
 }
+
+func (s *Suite) TestPubsubNewGoroutine(ch *check.C) {
+	pubsub := NewPubsub(true)
+	counter := 0
+	ch1 := make(chan int)
+
+	sub := pubsub.On("hello", func(data interface{}) {
+		counter += data.(int)
+		ch1 <- counter
+	})
+
+	pubsub.Publish("hello", 3)
+
+	ch.Check(counter, check.Equals, 0)
+	<-ch1
+	ch.Check(counter, check.Equals, 3)
+
+	pubsub.Publish("hello", 5)
+	ch.Check(counter, check.Equals, 3)
+	<-ch1
+	ch.Check(counter, check.Equals, 8)
+
+	sub.Off()
+	pubsub.Publish("hello", 5)
+	ch.Check(counter, check.Equals, 8)
+	pubsub.Publish("hello", 5)
+	ch.Check(counter, check.Equals, 8)
+}

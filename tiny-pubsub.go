@@ -20,12 +20,19 @@ type Subscription struct {
 
 type Pubsub struct {
 	channel
+	concurrent bool
 }
 
-func NewPubsub() *Pubsub {
+func NewPubsub(config ...bool) *Pubsub {
 	ps := new(Pubsub)
 
+	if(len(config) == 1) {
+		ps.concurrent = config[0]
+	}
+
 	ps.channels = make(map[string]*channel)
+
+
 	return ps
 }
 
@@ -63,7 +70,12 @@ func (ps *Pubsub) Publish(namespace string, args interface{}) *Pubsub {
 	chann := ps.channels[namespace]
 
 	for _, callback := range chann.callbacks {
-		callback(args)
+		if(ps.concurrent) {
+			go callback(args)
+		} else {
+			callback(args)
+		}
 	}
+
 	return ps
 }
