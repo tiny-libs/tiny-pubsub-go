@@ -67,7 +67,10 @@ func (ps *Pubsub) On(namespace string, callback func(data interface{})) *Subscri
 }
 
 func (ps *Pubsub) Publish(namespace string, args interface{}) *Pubsub {
-	chann := ps.channels[namespace]
+	chann, ok := ps.channels[namespace]
+	if(!ok) {
+		return ps
+	}
 
 	for _, callback := range chann.callbacks {
 		if(ps.concurrent) {
