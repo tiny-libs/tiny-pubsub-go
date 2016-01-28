@@ -5,14 +5,14 @@ import (
 
 type channel struct {
 	namespace string
-	callbacks map[int]func(data interface{})
+	callbacks map[int]func(data []interface{})
 	lastIndex int
 	channels map[string]*channel
 }
 
 type Subscription struct {
 	namespace string
-	callback func(data interface{})
+	callback func(data []interface{})
 	chn *channel
 	index int
 	ps *Pubsub
@@ -44,12 +44,12 @@ func (sub *Subscription) Off() *Pubsub {
 	return sub.ps
 }
 
-func (ps *Pubsub) On(namespace string, callback func(data interface{})) *Subscription {
+func (ps *Pubsub) On(namespace string, callback func(data []interface{})) *Subscription {
 	chann, ok := ps.channels[namespace]
 	if(!ok) {
 		chann = &channel{
 			namespace : namespace,
-			callbacks : make(map[int]func(data interface{})),
+			callbacks : make(map[int]func(data []interface{})),
 		}
 		ps.channels[namespace] = chann
 	}
@@ -66,7 +66,7 @@ func (ps *Pubsub) On(namespace string, callback func(data interface{})) *Subscri
 	}
 }
 
-func (ps *Pubsub) Publish(namespace string, args interface{}) *Pubsub {
+func (ps *Pubsub) Publish(namespace string, args ...interface{}) *Pubsub {
 	chann, ok := ps.channels[namespace]
 	if(!ok) {
 		return ps

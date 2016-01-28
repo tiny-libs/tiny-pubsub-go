@@ -3,6 +3,7 @@ package pubsub
 import (
 	check "gopkg.in/check.v1"
 	"testing"
+	"log"
 )
 
 var _ = check.Suite(new(Suite))
@@ -17,8 +18,8 @@ func (s *Suite) TestSub(ch *check.C) {
 	pubsub := NewPubsub()
 	var val string
 
-	pubsub.On("hello", func(data interface{}) {
-		val = data.(string)
+	pubsub.On("hello", func(data []interface{}) {
+		val = data[0].(string)
 	})
 	pubsub.Publish("hello", "world")
 
@@ -39,20 +40,20 @@ func (s *Suite) TestMoreSubs(ch *check.C) {
 	val2 := "test"
 	val3 := []int{}
 
-	pubsub.On("hello", func(data interface{}) {
-		val, ok := data.(int)
+	pubsub.On("hello", func(data []interface{}) {
+		val, ok := data[0].(int)
 		if(ok) {
 			val1 = val
 		}
 	})
-	pubsub.On("hello", func(data interface{}) {
-		val, ok := data.(string)
+	pubsub.On("hello", func(data []interface{}) {
+		val, ok := data[0].(string)
 		if(ok) {
 			val2 = val
 		}
 	})
-	pubsub.On("hello", func(data interface{}) {
-		val, ok := data.(int)
+	pubsub.On("hello", func(data []interface{}) {
+		val, ok := data[0].(int)
 		if(ok) {
 			val3 = append(val3, val)
 		}
@@ -78,8 +79,8 @@ func (s *Suite) TestChaining(ch *check.C) {
 	pubsub := NewPubsub()
 	val1 := "test"
 
-	pubsub.On("hello", func(data interface{}) {
-		val, ok := data.(string)
+	pubsub.On("hello", func(data []interface{}) {
+		val, ok := data[0].(string)
 		if(ok) {
 			val1 = val
 		}
@@ -95,9 +96,9 @@ func (s *Suite) TestConcurrentCallback(ch *check.C) {
 	var counter int
 	ch1 := make(chan int)
 
-	pubsub.On("hello", func(data interface{}) {
+	pubsub.On("hello", func(data []interface{}) {
 		go func() {
-			counter += data.(int)
+			counter += data[0].(int)
 			ch1 <- counter
 		}()
 	})
@@ -116,8 +117,8 @@ func (s *Suite) TestUnsubscribe(ch *check.C) {
 	pubsub := NewPubsub()
 	var counter int
 
-	sub := pubsub.On("hello", func(data interface{}) {
-		counter += data.(int)
+	sub := pubsub.On("hello", func(data []interface{}) {
+		counter += data[0].(int)
 	})
 
 	pubsub.Publish("hello", 3)
@@ -139,8 +140,8 @@ func (s *Suite) TestPubsubNewGoroutine(ch *check.C) {
 	counter := 0
 	ch1 := make(chan int)
 
-	sub := pubsub.On("hello", func(data interface{}) {
-		counter += data.(int)
+	sub := pubsub.On("hello", func(data []interface{}) {
+		counter += data[0].(int)
 		ch1 <- counter
 	})
 
@@ -167,8 +168,8 @@ func (s *Suite) TestPublishToUnsubscribed(ch *check.C) {
 	counter := 0
 	ch1 := make(chan int)
 
-	sub := pubsub.On("hello", func(data interface{}) {
-		counter += data.(int)
+	sub := pubsub.On("hello", func(data []interface{}) {
+		counter += data[0].(int)
 		ch1 <- counter
 	})
 
@@ -188,4 +189,24 @@ func (s *Suite) TestPublishToUnsubscribed(ch *check.C) {
 	ch.Check(counter, check.Equals, 8)
 	pubsub.Publish("world", 5)
 	ch.Check(counter, check.Equals, 8)
+}
+
+func (s *Suite) TestPublishMultipleArgs(ch *check.C) {
+	pubsub := NewPubsub()
+	counter := 0
+
+	pubsub.On("hello", func(data []interface{}) {
+		log.Println(data)
+
+		for _, num := range data {
+			log.Println(num)
+			counter += num.(int)
+		}
+	})
+
+	pubsub.Publish("hello", 3)
+	ch.Check(counter, check.Equals, 3)
+
+	pubsub.Publish("hello", 1, 2)
+	ch.Check(counter, check.Equals, 6)
 }
