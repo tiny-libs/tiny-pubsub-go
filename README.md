@@ -1,9 +1,9 @@
-tiny-pubsub-golang
+tiny-pubsub-go
 =========
 
 Tiny pubsub implementation for go language
 
-[![Build Status](https://travis-ci.org/tiny-libs/tiny-pubsub-golang.svg?branch=master)](https://travis-ci.org/tiny-libs/tiny-pubsub-golang)
+[![Build Status](https://travis-ci.org/tiny-libs/tiny-pubsub-go.svg?branch=master)](https://travis-ci.org/tiny-libs/tiny-pubsub-go)
 [![License](https://img.shields.io/npm/l/tiny-require.svg)](http://opensource.org/licenses/MIT)
 
 ## Examples
