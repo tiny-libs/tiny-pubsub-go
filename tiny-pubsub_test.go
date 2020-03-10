@@ -260,3 +260,26 @@ func (s *Suite) TestPublishMultipleArgs(ch *check.C) {
 	pubsub.Publish("hello", 1, 2)
 	ch.Check(counter, check.Equals, 6)
 }
+
+// Race detection test case
+func (s *Suite) TestConcurrentSubscribePublish(ch *check.C) {
+	pubsub := NewPubsub(true)
+	var counter uint64
+
+    for i := 1; i <= 10; i++ {
+		pubsub.On("hello", func(data []interface{}) {
+			val, ok := data[0].(int)
+
+			if (ok) {
+				atomic.AddUint64(&counter, uint64(val))
+			}
+			go pubsub.On("hello" + string(i), func(data []interface{}) {
+			})
+			go pubsub.Publish("hello" + string(i), i)
+		})
+    }
+
+    for i := 1; i <= 5; i++ {
+		go pubsub.Publish("hello", i)
+    }
+}
