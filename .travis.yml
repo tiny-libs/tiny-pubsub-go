@@ -1,8 +1,9 @@
 language: go
+
 go:
- - 1.9.0
- - 1.10.0
- - tip
+ - 1.9
+ - 1.10
+ - master
 
 script:
  - go test -race -v ./*.go
