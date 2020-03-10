@@ -4,6 +4,8 @@ import (
 	check "gopkg.in/check.v1"
 	"testing"
 	"log"
+	"sync/atomic"
+	"sync"
 )
 
 var _ = check.Suite(new(Suite))
@@ -113,6 +115,45 @@ func (s *Suite) TestConcurrentCallback(ch *check.C) {
 	ch.Check(counter, check.Equals, 3)
 }
 
+func (s *Suite) TestMultipleConcurrentCallbacks(ch *check.C) {
+	pubsub := NewPubsub(true)
+	var counter uint64
+	var wg sync.WaitGroup
+
+	// ch1 := make(chan uint64)
+    for i := 1; i <= 100; i++ {
+		pubsub.On("hello", func(data []interface{}) {
+			defer wg.Done()
+
+			val, ok := data[0].(int)
+
+			if (ok) {
+				atomic.AddUint64(&counter, uint64(val))
+			}
+		})
+    }
+
+    for i := 1; i <= 2; i++ {
+	    wg.Add(100)
+		go pubsub.Publish("hello", i)
+    }
+
+	wg.Wait()
+
+	ch.Check(counter, check.Equals, uint64(100 + 200))
+
+	counter = uint64(0)
+
+    for i := 1; i <= 5; i++ {
+	    wg.Add(100)
+		go pubsub.Publish("hello", i)
+    }
+
+	wg.Wait()
+
+	ch.Check(counter, check.Equals, uint64(100 + 200 + 300 + 400 + 500))
+}
+
 func (s *Suite) TestUnsubscribe(ch *check.C) {
 	pubsub := NewPubsub()
 	var counter int
@@ -137,58 +178,67 @@ func (s *Suite) TestUnsubscribe(ch *check.C) {
 
 func (s *Suite) TestPubsubNewGoroutine(ch *check.C) {
 	pubsub := NewPubsub(true)
-	counter := 0
-	ch1 := make(chan int)
+	var counter uint64
+	ch1 := make(chan uint64)
 
 	sub := pubsub.On("hello", func(data []interface{}) {
-		counter += data[0].(int)
+		val, ok := data[0].(int)
+
+		if (ok) {
+			atomic.AddUint64(&counter, uint64(val))
+		}
+
 		ch1 <- counter
 	})
 
+	ch.Check(counter, check.Equals, uint64(0))
 	pubsub.Publish("hello", 3)
 
-	ch.Check(counter, check.Equals, 0)
 	<-ch1
-	ch.Check(counter, check.Equals, 3)
+	ch.Check(counter, check.Equals, uint64(3))
 
+	ch.Check(counter, check.Equals, uint64(3))
 	pubsub.Publish("hello", 5)
-	ch.Check(counter, check.Equals, 3)
 	<-ch1
-	ch.Check(counter, check.Equals, 8)
+	ch.Check(counter, check.Equals, uint64(8))
 
 	sub.Off()
 	pubsub.Publish("hello", 5)
-	ch.Check(counter, check.Equals, 8)
+	ch.Check(counter, check.Equals, uint64(8))
 	pubsub.Publish("hello", 5)
-	ch.Check(counter, check.Equals, 8)
+	ch.Check(counter, check.Equals, uint64(8))
 }
 
 func (s *Suite) TestPublishToUnsubscribed(ch *check.C) {
 	pubsub := NewPubsub(true)
-	counter := 0
-	ch1 := make(chan int)
+	counter := uint64(0)
+	ch1 := make(chan uint64)
 
 	sub := pubsub.On("hello", func(data []interface{}) {
-		counter += data[0].(int)
+		val, ok := data[0].(int)
+
+		if (ok) {
+			atomic.AddUint64(&counter, uint64(val))
+		}
+
 		ch1 <- counter
 	})
 
+	ch.Check(counter, check.Equals, uint64(0))
 	pubsub.Publish("hello", 3)
-
-	ch.Check(counter, check.Equals, 0)
 	<-ch1
-	ch.Check(counter, check.Equals, 3)
+	ch.Check(counter, check.Equals, uint64(3))
 
 	pubsub.Publish("hello", 5)
-	ch.Check(counter, check.Equals, 3)
 	<-ch1
-	ch.Check(counter, check.Equals, 8)
+	ch.Check(counter, check.Equals, uint64(8))
 
 	sub.Off()
+
 	pubsub.Publish("hello", 5)
-	ch.Check(counter, check.Equals, 8)
+	ch.Check(counter, check.Equals, uint64(8))
 	pubsub.Publish("world", 5)
-	ch.Check(counter, check.Equals, 8)
+	ch.Check(counter, check.Equals, uint64(8))
 }
 
 func (s *Suite) TestPublishMultipleArgs(ch *check.C) {
